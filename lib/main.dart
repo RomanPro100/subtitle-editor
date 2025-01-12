@@ -501,7 +501,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: width * 0.08,
                     child: TextField(
                       onTap: () { _selectedIndex = i;},
-                      controller: TextEditingController()..text = "${DateFormat('HH:mm:ss,S').format(DateTime.fromMillisecondsSinceEpoch(subs[i].start.ticks, isUtc:true))}",
+                      controller: TextEditingController()..text = DateFormat('HH:mm:ss,S').format(DateTime.fromMillisecondsSinceEpoch(subs[i].start.ticks, isUtc:true)),
                       onChanged: (value) => {EditTimeStart(value)},
                       onEditingComplete: () => {
                         CompleteTimeStart(),
@@ -518,7 +518,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: width * 0.08,
                     child: TextField(
                       onTap: () {_selectedIndex = i;},
-                      controller: TextEditingController()..text = "${DateFormat('HH:mm:ss,S').format(DateTime.fromMillisecondsSinceEpoch(subs[i].end.ticks, isUtc:true))}",
+                      controller: TextEditingController()..text = DateFormat('HH:mm:ss,S').format(DateTime.fromMillisecondsSinceEpoch(subs[i].end.ticks, isUtc:true)),
                       onChanged: (value) => {EditTimeEnd(value)},
                       onEditingComplete: () => {
                         CompleteTimeEnd(),
