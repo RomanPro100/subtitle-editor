@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +16,7 @@ import 'package:subtitle_editor/editor/export/srt.dart' as srt;
 import 'package:subtitle_editor/collections/result.dart';
 
 // Размер проигрывателя - 16 на 9
-const RATIO = 9.0 / 16.0;
+const playerRatio = 9.0 / 16.0;
 // Часть экрана (окна), отведённая под плеер
 const playerPortion = 0.7;
 
@@ -39,18 +39,14 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(
-          title:
-              'Subtitle Editor Demo Home Page'), //Прямо тут можно задать новое имя, передаётся в [MyHomePage()]
+      home:
+          const MyHomePage(), //Прямо тут можно задать новое имя, передаётся в [MyHomePage()]
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage(
-      {super.key,
-      required this.title}); //А здесь имя запрашивается, передаётся в поле [MaterialApp.home]
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -78,13 +74,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // Добавляет фокус для перемещения на видео при нажатии esc
   late final FocusNode videoFocusNode;
 
-  // Выбранный файл-видео
-  late String? _file_video_path;
-  late String? _file_sub_path;
-
   var subs = SubtitleTable();
   int _selectedIndex = -1;
-  List<Subtitle> saves_subs = [];
+  List<Subtitle> savedSubs = [];
   int timeSchange = -1;
   int timeEchange = -1;
   bool selectChange = false;
@@ -96,9 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
       type: FileType.video,
     );
     if (result != null) {
-      String _videofilePath = result.files.single.path as String;
-      _file_video_path = _videofilePath;
-      player.open(Media(_videofilePath));
+      String videoFilePath = result.files.single.path!;
+      player.open(Media(videoFilePath));
       player.setSubtitleTrack(SubtitleTrack.uri("auto.srt"));
       setState(() {});
     } else {
@@ -115,15 +106,14 @@ class _MyHomePageState extends State<MyHomePage> {
       allowedExtensions: ['txt', 'srt'],
     );
     if (result != null) {
-      _file_sub_path = result.files.single.path as String;
-      player.setSubtitleTrack(SubtitleTrack.uri(_file_sub_path.toString()));
+      String fileSubPath = result.files.single.path as String;
+      player.setSubtitleTrack(SubtitleTrack.uri(fileSubPath.toString()));
       subs.export(File("auto.srt"), srt.export);
-      saves_subs.clear();
+      savedSubs.clear();
       setState(() {});
       build.call(context);
       setState(() {});
-      switch (
-          SubtitleTable.import(File(_file_sub_path.toString()), srt.import)) {
+      switch (SubtitleTable.import(File(fileSubPath.toString()), srt.import)) {
         case Ok(value: final v):
           subs = v;
           setState(() {});
@@ -161,29 +151,29 @@ class _MyHomePageState extends State<MyHomePage> {
     for (var i = 0; i < subs.length - 1; i++) {
       if (subs[i].start.ticks < player.state.position.inMilliseconds &&
           player.state.position.inMilliseconds < subs[i + 1].start.ticks) {
-        ScrollToIndex(i, 0);
+        scrollToIndex(i, 0);
       }
     }
   }
 
-  void ScrollToIndex(int index, double step) {
+  void scrollToIndex(int index, double step) {
     _controller2.jumpTo(90.0 * (index + 1 + step));
   }
 
-  void CompleteTimeStart() {
+  void completeTimeStart() {
     if (timeSchange != -1) {
       int ind = subs.edit(_selectedIndex, (editor) {
         editor.start = Millis(timeSchange);
         return true;
       });
-      ScrollToIndex(ind, -4);
+      scrollToIndex(ind, -4);
       _selectedIndex = ind;
       timeSchange = -1;
       setState(() {});
     }
   }
 
-  void EditTimeStart(final value) {
+  void editTimeStart(final value) {
     DateTime tt;
     try {
       tt = DateFormat('HH:mm:ss,S').parse(value);
@@ -197,20 +187,20 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void CompleteTimeEnd() {
+  void completeTimeEnd() {
     if (timeEchange != -1) {
       int ind = subs.edit(_selectedIndex, (editor) {
         editor.end = Millis(timeEchange);
         return true;
       });
-      ScrollToIndex(ind, -4);
+      scrollToIndex(ind, -4);
       _selectedIndex = ind;
       timeEchange = -1;
       setState(() {});
     }
   }
 
-  void EditTimeEnd(final value) {
+  void editTimeEnd(final value) {
     DateTime tt;
     try {
       tt = DateFormat('HH:mm:ss,S').parse(value);
@@ -224,7 +214,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void EditLine(final value, int index) {
+  void editLine(final value, int index) {
     subs[index];
     subs.edit(index, (editor) {
       editor.text = value;
@@ -276,10 +266,10 @@ class _MyHomePageState extends State<MyHomePage> {
     for (var i = 0; i < subs.length - 1; i++) {
       if (subs[i].start.ticks < player.state.position.inMilliseconds &&
           player.state.position.inMilliseconds < subs[i + 1].start.ticks) {
-        saves_subs.add(subs[i]);
+        savedSubs.add(subs[i]);
         subs.edit(i, (_) => false);
-        if (saves_subs.length == 100) {
-          saves_subs.removeAt(0);
+        if (savedSubs.length == 100) {
+          savedSubs.removeAt(0);
         }
         setState(() {});
       }
@@ -294,35 +284,35 @@ class _MyHomePageState extends State<MyHomePage> {
     subs.export(File(result.toString()), srt.export);
   }
 
-  void PressedCtrlZ() {
-    if (saves_subs.length == 0) {
+  void pressedCtrlZ() {
+    if (savedSubs.isEmpty) {
       return;
     }
-    var s = saves_subs[saves_subs.length - 1];
+    var s = savedSubs[savedSubs.length - 1];
     subs.insert(-1, (editor) {
       editor.text = s.text;
       editor.start = s.start;
       editor.end = s.end;
       return true;
     });
-    saves_subs.removeAt(saves_subs.length - 1);
+    savedSubs.removeAt(savedSubs.length - 1);
     setState(() {});
   }
 
-  void PressedDel() {
+  void pressedDel() {
     if (_selectedIndex == -1) {
       return;
     }
-    saves_subs.add(subs[_selectedIndex]);
+    savedSubs.add(subs[_selectedIndex]);
     subs.edit(_selectedIndex, (_) => false);
-    if (saves_subs.length == 100) {
-      saves_subs.removeAt(0);
+    if (savedSubs.length == 100) {
+      savedSubs.removeAt(0);
     }
     setState(() {});
     _selectedIndex == -1;
   }
 
-  void PressedEsc() {
+  void pressedEsc() {
     //videoFocusNode.requestFocus();
     FocusScopeNode currentFocus = FocusScope.of(context);
     currentFocus.unfocus();
@@ -351,7 +341,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text("Subtitle Editor"),
       ),
       body: Shortcuts(
         shortcuts: <ShortcutActivator, Intent>{
@@ -366,13 +356,13 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Actions(
           actions: <Type, Action<Intent>>{
             IncrementIntent: CallbackAction<IncrementIntent>(
-              onInvoke: (IncrementIntent intent) => PressedCtrlZ(),
+              onInvoke: (IncrementIntent intent) => pressedCtrlZ(),
             ),
             IncrementIntent2: CallbackAction<IncrementIntent2>(
-              onInvoke: (IncrementIntent2 intent) => PressedDel(),
+              onInvoke: (IncrementIntent2 intent) => pressedDel(),
             ),
             EscIntent: CallbackAction<EscIntent>(
-              onInvoke: (EscIntent intent) => PressedEsc(),
+              onInvoke: (EscIntent intent) => pressedEsc(),
             )
           },
           child: Row(
@@ -384,7 +374,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     // Коробка под видео
                     width: width * playerPortion,
                     //width: MediaQuery.of(context).size.width,
-                    height: width * playerPortion * RATIO,
+                    height: width * playerPortion * playerRatio,
                     // Use [Video] widget to display video output.
                     child: Focus(
                         focusNode: videoFocusNode,
@@ -474,7 +464,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
-              Container(width: 5, color: Colors.black),
               Expanded(
                 child: ListView.builder(
                     // Построитель списка для субтитров
@@ -512,9 +501,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                               subs[i].start.ticks,
                                               isUtc: true)),
                                     onChanged: (value) =>
-                                        {EditTimeStart(value)},
+                                        {editTimeStart(value)},
                                     onEditingComplete: () => {
-                                      CompleteTimeStart(),
+                                      completeTimeStart(),
                                     },
                                     decoration: const InputDecoration(
                                       border: InputBorder.none,
@@ -536,9 +525,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                           DateTime.fromMillisecondsSinceEpoch(
                                               subs[i].end.ticks,
                                               isUtc: true)),
-                                    onChanged: (value) => {EditTimeEnd(value)},
+                                    onChanged: (value) => {editTimeEnd(value)},
                                     onEditingComplete: () => {
-                                      CompleteTimeEnd(),
+                                      completeTimeEnd(),
                                     },
                                     decoration: const InputDecoration(
                                       border: InputBorder.none,
@@ -557,7 +546,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ..text = subs[i].text,
                                 minLines: 1,
                                 maxLines: 3,
-                                onChanged: (value) => {EditLine(value, i)},
+                                onChanged: (value) => {editLine(value, i)},
                                 onEditingComplete: () => {
                                   setState(() {
                                     _selectedIndex = i;
@@ -577,10 +566,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                   icon: Icon(Icons.delete),
                                   onPressed: () {
                                     setState(() {
-                                      saves_subs.add(subs[i]);
+                                      savedSubs.add(subs[i]);
                                       subs.edit(i, (_) => false);
-                                      if (saves_subs.length == 100) {
-                                        saves_subs.removeAt(0);
+                                      if (savedSubs.length == 100) {
+                                        savedSubs.removeAt(0);
                                       }
                                     });
                                   }),
