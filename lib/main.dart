@@ -17,6 +17,7 @@ import 'package:subtitle_editor/collections/result.dart';
 
 /// Размер проигрывателя - 16 на 9
 const playerRatio = 9.0 / 16.0;
+
 /// Часть окна, отведённая под плеер
 const playerPortion = 0.7;
 
@@ -76,7 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late final FocusNode videoFocusNode;
 
   /// Таблица с редактируемыми субтитрами.
-  /// 
+  ///
   /// После каждого редктирования экспортируется в файл `auto.srt` для использования в плеере.
   var subs = SubtitleTable();
 
@@ -521,11 +522,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                           DateTime.fromMillisecondsSinceEpoch(
                                               subs[i].start.ticks,
                                               isUtc: true)),
-                                    onChanged: (value) =>
-                                        {editTimeStart(value)},
-                                    onEditingComplete: () => {
-                                      completeTimeStart(),
+                                    onChanged: (value) {
+                                      editTimeStart(value);
                                     },
+                                    onEditingComplete: completeTimeStart,
                                     decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       isDense: true,
@@ -546,10 +546,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                           DateTime.fromMillisecondsSinceEpoch(
                                               subs[i].end.ticks,
                                               isUtc: true)),
-                                    onChanged: (value) => {editTimeEnd(value)},
-                                    onEditingComplete: () => {
-                                      completeTimeEnd(),
+                                    onChanged: (value) {
+                                      editTimeEnd(value);
                                     },
+                                    onEditingComplete: completeTimeEnd,
                                     decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       isDense: true,
@@ -567,17 +567,19 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ..text = subs[i].text,
                                 minLines: 1,
                                 maxLines: 3,
-                                onChanged: (value) => {editLine(value, i)},
-                                onEditingComplete: () => {
+                                onChanged: (value) {
+                                  editLine(value, i);
+                                },
+                                onEditingComplete: () {
                                   setState(() {
                                     _selectedIndex = i;
-                                  }),
+                                  });
                                 },
                               ),
-                              onFocusChange: (value) => {
-                                subs.export(File("auto.srt"), srt.export),
+                              onFocusChange: (value) {
+                                subs.export(File("auto.srt"), srt.export);
                                 player.setSubtitleTrack(
-                                    SubtitleTrack.uri("auto.srt")),
+                                    SubtitleTrack.uri("auto.srt"));
                               },
                             )),
                             SizedBox(
