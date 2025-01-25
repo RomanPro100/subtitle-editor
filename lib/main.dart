@@ -15,9 +15,9 @@ import 'package:subtitle_editor/editor/import/srt.dart' as srt;
 import 'package:subtitle_editor/editor/export/srt.dart' as srt;
 import 'package:subtitle_editor/collections/result.dart';
 
-// Размер проигрывателя - 16 на 9
+/// Размер проигрывателя - 16 на 9
 const playerRatio = 9.0 / 16.0;
-// Часть экрана (окна), отведённая под плеер
+/// Часть окна, отведённая под плеер
 const playerPortion = 0.7;
 
 void main() {
@@ -65,25 +65,35 @@ class EscIntent extends Intent {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // Создаём плеер и управление плейером
+  // Создаём плеер и управление плеером.
   late Player player = Player();
   late VideoController controller = VideoController(player);
+  // Создаём ???
   late SubtitleTrack subtitle = player.state.track.subtitle;
   final ScrollController _controller2 = ScrollController();
 
-  // Добавляет фокус для перемещения на видео при нажатии esc
+  // Фокус для перемещения на видео при нажатии Escape.
   late final FocusNode videoFocusNode;
 
+  /// Таблица с редактируемыми субтитрами.
+  /// 
+  /// После каждого редктирования экспортируется в файл `auto.srt` для использования в плеере.
   var subs = SubtitleTable();
-  int? _selectedIndex;
+
+  /// Список удалённых субтитров.
   List<Subtitle> savedSubs = [];
+
+  int? _selectedIndex;
   int? timeSchange;
   int? timeEchange;
   int? editIndex;
   bool selectChange = false;
   bool isDoubleTap = false;
 
-  // импорт видео в программу
+  /// Импортирует видео
+  ///
+  /// Видео открывается в плеере, в нём задаётся файл `auto.srt` как дорожка субтитров.
+  /// Если видео не импортировалось, показывается предупреждение снизу.
   void getFileVideo() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.video,
@@ -100,7 +110,11 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // импорт субтитров в таблицу
+  /// Импортирует субтитры
+  ///
+  /// Субтитры сохраняются в файл `auto.srt`, который использует плеер,
+  /// и в таблицу [subs] для редактирования пользователем.
+  /// Если субтитры не импортировались, показывается предупреждение снизу.
   void getFileSubtitle() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -128,7 +142,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // Функция для вставки видео в плейер
   @override
   void initState() {
     super.initState();
@@ -264,6 +277,12 @@ class _MyHomePageState extends State<MyHomePage> {
     editIndex = null;
   }
 
+  /// Удаляет субтитр, по которому находится указатель видео.
+  ///
+  /// Если указатель не находится на субтитре, или по указателю находится
+  /// несколько субтитров, удаляется тот, начало которого стоит к нему ближе слева.
+  /// Удалённые субтитры помещаются в [savedSubs] для дальнейшего восстановления
+  /// при помощи Ctrl-Z.
   void deleteSub() {
     for (var i = 0; i < subs.length - 1; i++) {
       if (subs[i].start.ticks < player.state.position.inMilliseconds &&
