@@ -54,16 +54,16 @@ class SubtitleTable {
   /// Если [index] не в таблице, добавить субтитр в её начало.
   /// # Возвращает
   /// - Новый индекс вставленного субтитра
-  /// - -1 если субтитр не был вставлен (переполнение или запрос на удаление)
-  int insert(int index, EditFunction f) {
+  /// - null, если субтитр не был вставлен (переполнение или запрос на удаление)
+  int? insert(int index, EditFunction f) {
     const maxLength = (1 << 63) - 1;
-    if (length == maxLength) return -1;
+    if (length == maxLength) return null;
 
     final isIndexValid = 0 <= index && index < length;
     final time = isIndexValid ? this[index].end : Millis(0);
     final subtitle = Subtitle(time, time, "");
     final isNotDeleted = f(SubtitleEditor(subtitle));
-    return isNotDeleted ? _subtitleTree.insert(subtitle) : -1;
+    return isNotDeleted ? _subtitleTree.insert(subtitle) : null;
   }
 
   /// Отредактировать субтитр на позиции [index].
@@ -73,11 +73,11 @@ class SubtitleTable {
   /// ```
   /// # Возвращает
   /// - Новый индекс отредактированного субтитра
-  /// - -1 если субтитр был удалён
-  int edit(int index, EditFunction f) {
+  /// - null, если субтитр был удалён
+  int? edit(int index, EditFunction f) {
     final subtitle = _subtitleTree.pop(index);
     final isNotDeleted = f(SubtitleEditor(subtitle));
-    return isNotDeleted ? _subtitleTree.insert(subtitle) : -1;
+    return isNotDeleted ? _subtitleTree.insert(subtitle) : null;
   }
 
   /// Просмотреть субтитр на позиции [index].

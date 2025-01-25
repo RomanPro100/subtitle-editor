@@ -75,10 +75,11 @@ class _MyHomePageState extends State<MyHomePage> {
   late final FocusNode videoFocusNode;
 
   var subs = SubtitleTable();
-  int _selectedIndex = -1;
+  int? _selectedIndex;
   List<Subtitle> savedSubs = [];
-  int timeSchange = -1;
-  int timeEchange = -1;
+  int? timeSchange;
+  int? timeEchange;
+  int? editIndex;
   bool selectChange = false;
   bool isDoubleTap = false;
 
@@ -161,16 +162,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void completeTimeStart() {
-    if (timeSchange != -1) {
-      int ind = subs.edit(_selectedIndex, (editor) {
-        editor.start = Millis(timeSchange);
-        return true;
-      });
-      scrollToIndex(ind, -4);
-      _selectedIndex = ind;
-      timeSchange = -1;
-      setState(() {});
+    if (timeSchange == null) {
+      return;
     }
+    int ind = subs.edit(_selectedIndex!, (editor) {
+      editor.start = Millis(timeSchange!);
+      return true;
+    })!;
+    scrollToIndex(ind, -4);
+    _selectedIndex = ind;
+    timeSchange = null;
+    setState(() {});
   }
 
   void editTimeStart(final value) {
@@ -188,16 +190,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void completeTimeEnd() {
-    if (timeEchange != -1) {
-      int ind = subs.edit(_selectedIndex, (editor) {
-        editor.end = Millis(timeEchange);
-        return true;
-      });
-      scrollToIndex(ind, -4);
-      _selectedIndex = ind;
-      timeEchange = -1;
-      setState(() {});
+    if (timeEchange == null) {
+      return;
     }
+    int ind = subs.edit(_selectedIndex!, (editor) {
+      editor.end = Millis(timeEchange!);
+      return true;
+    })!;
+    scrollToIndex(ind, -4);
+    _selectedIndex = ind;
+    timeEchange = null;
+    setState(() {});
   }
 
   void editTimeEnd(final value) {
@@ -222,8 +225,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  int editindex = -2;
-
   void setTime() {
     subs.insert(-1, (editor) {
       editor.text = "";
@@ -235,16 +236,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void setStartTime() {
-    if (editindex == -2) {
-      int ind = subs.insert(-1, (editor) {
+    if (editIndex == null) {
+      int? ind = subs.insert(-1, (editor) {
         editor.text = "";
         editor.start = Millis(player.state.position.inMilliseconds);
         editor.end = Millis(player.state.position.inMilliseconds + 100);
         return true;
       });
-      editindex = ind;
+      editIndex = ind;
     } else {
-      subs.edit(editindex, (editor) {
+      subs.edit(editIndex!, (editor) {
         editor.start = Millis(player.state.position.inMilliseconds);
         return true;
       });
@@ -252,14 +253,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void setEndTime() {
-    if (editindex != -2) {
-      subs.edit(editindex, (editor) {
-        editor.end = Millis(player.state.position.inMilliseconds);
-        return true;
-      });
-      setState(() {});
+    if (editIndex == null) {
+      return;
     }
-    editindex = -2;
+    subs.edit(editIndex!, (editor) {
+      editor.end = Millis(player.state.position.inMilliseconds);
+      return true;
+    });
+    setState(() {});
+    editIndex = null;
   }
 
   void deleteSub() {
@@ -300,16 +302,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void pressedDel() {
-    if (_selectedIndex == -1) {
+    if (_selectedIndex == null) {
       return;
     }
-    savedSubs.add(subs[_selectedIndex]);
-    subs.edit(_selectedIndex, (_) => false);
+    savedSubs.add(subs[_selectedIndex!]);
+    subs.edit(_selectedIndex!, (_) => false);
     if (savedSubs.length == 100) {
       savedSubs.removeAt(0);
     }
     setState(() {});
-    _selectedIndex == -1;
+    _selectedIndex == null;
   }
 
   void pressedEsc() {
@@ -320,7 +322,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void toTimeVideo() {
-    Millis time = subs[_selectedIndex].start;
+    Millis time = subs[_selectedIndex!].start;
     player.seek(Duration(
         hours: time.format().hour,
         minutes: time.format().minute,
